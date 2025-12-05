@@ -6,6 +6,8 @@ import cv2
 
 with (mp.solutions.pose.Pose() as pose_detector, mp.solutions.hands.Hands() as hand_detector):
     cap = cv2.VideoCapture(0)
+    cv2.namedWindow(WIN_NAME, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(WIN_NAME, WIN_WIDTH, WIN_HEIGHT)
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -18,7 +20,7 @@ with (mp.solutions.pose.Pose() as pose_detector, mp.solutions.hands.Hands() as h
         res_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         cv2.imshow(WIN_NAME, res_image)
 
-        if cv2.getWindowProperty(WIN_NAME, cv2.WND_PROP_VISIBLE) < 1:
+        if cv2.waitKey(1) & 0xFF == 27 or cv2.getWindowProperty(WIN_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
 
     cap.release()

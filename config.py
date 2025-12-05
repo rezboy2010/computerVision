@@ -1,1 +1,3 @@
 WIN_NAME = "Arrow of Fate"
+WIN_WIDTH = 1280
+WIN_HEIGHT = 960
