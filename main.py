@@ -1,14 +1,15 @@
 import mediapipe as mp
+from detections import *
 from rendering import *
 from config import *
-import cv2
 
 
-bow_img = cv2.imread('static/images/arrow.png', cv2.IMREAD_UNCHANGED)
+bow_img = cv2.imread('static/images/bow.png', cv2.IMREAD_UNCHANGED)
 mp_pose = mp.solutions.pose
 mp_hands = mp.solutions.hands
 
-with mp_pose.Pose(min_detection_confidence=0.8) as pose_detector, mp_hands.Hands() as hand_detector:
+with (mp_pose.Pose(min_detection_confidence=DETECTION_COEF) as pose_detector,
+      mp_hands.Hands(min_detection_confidence=DETECTION_COEF) as hand_detector):
     cap = cv2.VideoCapture(0)
     cv2.namedWindow(WIN_NAME, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN_NAME, SCREEN_W, SCREEN_H)
@@ -23,12 +24,16 @@ with mp_pose.Pose(min_detection_confidence=0.8) as pose_detector, mp_hands.Hands
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         res_image = frame.copy()
 
-        results = pose_detector.process(img_rgb)
+        pose_results = pose_detector.process(img_rgb)
+        hand_results = hand_detector.process(img_rgb)
 
-        if results.pose_landmarks:
-            landmarks = results.pose_landmarks.landmark
-            left_wrist = landmarks[20]
-            draw_bow(res_image, bow_img, left_wrist.x + BOW_SHIFT_X, left_wrist.y + BOW_SHIFT_Y)
+        if pose_results.pose_landmarks:
+            landmarks = pose_results.pose_landmarks.landmark
+            left_knuckle = landmarks[20]
+            left_wrist = landmarks[16]
+
+            if hand_results.multi_hand_landmarks is not None and detect_fist(res_image, hand_results):
+                draw_bow(res_image, bow_img, left_knuckle.x, left_knuckle.y, left_wrist.x, left_wrist.y - WRIST_SHIFT)
 
         cv2.imshow(WIN_NAME, res_image)
 
