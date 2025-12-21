@@ -68,7 +68,7 @@ with (mp_pose.Pose(min_detection_confidence=POSE_COEF, min_tracking_confidence=0
                 fist_off += 1
                 fist_on = 0
 
-            if not fist_state and fist_on >= 2: # включение
+            if not fist_state and fist_on >= 2:  # включение
                 fist_state = True
             elif fist_state and fist_off >= 8:  # выключение
                 fist_state = False
