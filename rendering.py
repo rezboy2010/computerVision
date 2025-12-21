@@ -1,8 +1,11 @@
+from config import *
 import numpy as np
 import cv2
 
 
 def draw_bow(img, bow, knuckle_x: int, knuckle_y: int, wrist_x: int, wrist_y: int):
+    wrist_y -= WRIST_SHIFT
+
     # Была подборка коэф-ов для поворота
     dx = wrist_x - knuckle_x
     dy = wrist_y - knuckle_y - 0.05

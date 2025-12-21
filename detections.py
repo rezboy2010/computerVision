@@ -15,10 +15,22 @@ def get_points(landmark, shape):
 def palm_size(landmark, shape):
     x1, y1 = landmark[0].x * shape[1], landmark[0].y * shape[0]
     x2, y2 = landmark[5].x * shape[1], landmark[5].y * shape[0]
-    return ((x1 - x2)**2 + (y1 - y2) ** 2) ** .5
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** .5
 
 
 def detect_fist(img, results):
-    (x, y), r = cv2.minEnclosingCircle(get_points(results.multi_hand_landmarks[0].landmark, img.shape))
-    ws = palm_size(results.multi_hand_landmarks[0].landmark, img.shape)
+    idx = 0
+
+    for i, h in enumerate(results.multi_handedness):
+        if h.classification[0].label == "Left":
+            idx = i
+            break
+
+    lm = results.multi_hand_landmarks[idx].landmark
+    _, r = cv2.minEnclosingCircle(get_points(lm, img.shape))
+    ws = palm_size(lm, img.shape)
     return 2 * r / ws <= FIST_THRESHOLD
+
+
+def is_hand_behind_back(landmarks):
+    return landmarks[19].y > landmarks[13].y and landmarks[11].y > landmarks[13].y
