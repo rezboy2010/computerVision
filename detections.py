@@ -1,6 +1,7 @@
 from config import *
 import numpy as np
 import cv2
+import time
 
 
 def get_points(landmark, shape):
@@ -18,11 +19,11 @@ def palm_size(landmark, shape):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** .5
 
 
-def detect_fist(img, results):
+def detect_fist(img, results, hand: str):
     idx = 0
 
     for i, h in enumerate(results.multi_handedness):
-        if h.classification[0].label == "Left":
+        if h.classification[0].label == hand:
             idx = i
             break
 
@@ -34,3 +35,43 @@ def detect_fist(img, results):
 
 def is_hand_behind_back(landmarks):
     return landmarks[19].y > landmarks[13].y and landmarks[11].y > landmarks[13].y
+
+
+def check_bow_drawn(bow_x, bow_y, arrow_x, arrow_y):
+    return ((bow_x - arrow_x) ** 2 + (bow_y - arrow_y) ** 2) ** 0.5 < START_DIST
+
+
+class Updater:
+    def __init__(self, hand):
+        self.hand_results = None
+        self.res_image = None
+        self.hand = hand
+        self.last_fist_t = 0.0
+        self.fist_on = 0
+        self.fist_off = 0
+        self.fist_state = False
+
+    def update(self, hand_results, res_image):
+        self.hand_results = hand_results
+        self.res_image = res_image
+        t = time.time()
+
+        raw_fist_now = (self.hand_results.multi_hand_landmarks is not None) and detect_fist(self.res_image, self.hand_results,  self.hand)
+
+        if raw_fist_now:
+            self.last_fist_t = t
+
+        raw_fist = raw_fist_now or (t - self.last_fist_t) < FIST_HOLD_S
+
+        # сколько кадров подрят показывается или не показывается
+        if raw_fist:
+            self.fist_on += 1
+            self.fist_off = 0
+        else:
+            self.fist_off += 1
+            self.fist_on = 0
+
+        if not self.fist_state and self.fist_on >= 2:  # включение
+            self.fist_state = True
+        elif self.fist_state and self.fist_off >= 3:  # выключение
+            self.fist_state = False

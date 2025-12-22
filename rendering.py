@@ -3,37 +3,41 @@ import numpy as np
 import cv2
 
 
-def draw_bow(img, bow, knuckle_x: int, knuckle_y: int, wrist_x: int, wrist_y: int):
-    wrist_y -= WRIST_SHIFT
+def draw(img, obj, knuckle_x: int, knuckle_y: int,
+         wrist_x: int = None, wrist_y: int = None, angle_deg: float = None, arrow: bool = False):
+    if angle_deg is None:
+        # Была подборка коэф-ов для поворота
+        wrist_y -= WRIST_SHIFT
+        dx = wrist_x - knuckle_x
+        dy = wrist_y - knuckle_y - 0.05
+        angle_rad = np.arctan2(dy, dx) * 1.1
+        angle_deg = -angle_rad * 180.0 / np.pi + 35
 
-    # Была подборка коэф-ов для поворота
-    dx = wrist_x - knuckle_x
-    dy = wrist_y - knuckle_y - 0.05
-    angle_rad = np.arctan2(dy, dx) * 1.1
-    angle_deg = -angle_rad * 180.0 / np.pi + 35
+    if arrow:
+        knuckle_y += np.sin(np.radians(angle_deg)) * ARROW_LENGTH
 
-    BOW_H, BOW_W = bow.shape[:2]
-    center = (BOW_W // 2, BOW_H // 2)
+    OBJ_H, OBJ_W = obj.shape[:2]
+    center = (OBJ_W // 2, OBJ_H // 2)
 
     M = cv2.getRotationMatrix2D(center, angle_deg, 1.0)
-    rotated_bow = cv2.warpAffine(
-        bow,
+    rotated_obj = cv2.warpAffine(
+        obj,
         M,
-        (BOW_W, BOW_H),
+        (OBJ_W, OBJ_H),
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(0, 0, 0, 0)
     )
 
-    bow = rotated_bow
+    obj = rotated_obj
     h, w, _ = img.shape
     wx = int(knuckle_x * w)
     wy = int(knuckle_y * h)
 
-    x0 = wx - BOW_W // 2
-    y0 = wy - BOW_H // 2
-    x1 = wx + BOW_W // 2
-    y1 = wy + BOW_H // 2
+    x0 = wx - OBJ_W // 2
+    y0 = wy - OBJ_H // 2
+    x1 = wx + OBJ_W // 2
+    y1 = wy + OBJ_H // 2
 
     x0_cl = max(0, x0)
     y0_cl = max(0, y0)
@@ -49,7 +53,7 @@ def draw_bow(img, bow, knuckle_x: int, knuckle_y: int, wrist_x: int, wrist_y: in
         bx1 = bx0 + output_w
         by1 = by0 + output_h
 
-        bow_roi = bow[by0:by1, bx0:bx1]
+        bow_roi = obj[by0:by1, bx0:bx1]
         img_roi = img[y0_cl:y1_cl, x0_cl:x1_cl]
 
         b_bow, g_bow, r_bow, a_bow = cv2.split(bow_roi)
@@ -61,3 +65,23 @@ def draw_bow(img, bow, knuckle_x: int, knuckle_y: int, wrist_x: int, wrist_y: in
 
         blended = alpha * bow_rgb + (1 - alpha) * img_roi
         img[y0_cl:y1_cl, x0_cl:x1_cl] = blended.astype(np.uint8)
+
+    return angle_deg
+
+
+def bow_tips_frame(frame, bow_img, kn_x, kn_y, angle_deg, tips_local):
+    H, W = bow_img.shape[:2]
+    h, w = frame.shape[:2]
+    cx, cy = W/2, H/2
+
+    M = cv2.getRotationMatrix2D((cx, cy), angle_deg, 1.0)
+    M[0, 2] += kn_x * w - cx
+    M[1, 2] += kn_y * h - cy
+
+    def tr(p):
+        x, y = p
+        X = M[0, 0] * x + M[0, 1] * y + M[0, 2]
+        Y = M[1, 0] * x + M[1, 1] * y + M[1, 2]
+        return int(round(X)), int(round(Y))
+
+    return tr(tips_local[0]), tr(tips_local[1])
