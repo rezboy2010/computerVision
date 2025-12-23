@@ -85,3 +85,38 @@ def bow_tips_frame(frame, bow_img, kn_x, kn_y, angle_deg, tips_local):
         return int(round(X)), int(round(Y))
 
     return tr(tips_local[0]), tr(tips_local[1])
+
+
+STATE_MENU = "menu"
+STATE_GAME = "game"
+
+btn_play = (SCREEN_W // 2 - 100, 200, SCREEN_W // 2 + 125, 300)
+
+
+def in_rect(x, y, r):
+    x1, y1, x2, y2 = r
+    return x1 <= x <= x2 and y1 <= y <= y2
+
+
+cv2.namedWindow(WIN_NAME)
+
+
+def draw_button(img, rect, text):
+    x1, y1, x2, y2 = rect
+    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
+    cv2.putText(img, text, (x1 + 20, y1 + 70),
+                cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 2, cv2.LINE_AA)
+
+
+def render_menu(img):
+    cv2.putText(img, "Arrow of Fate", (SCREEN_W // 2 - 300, 100),
+                cv2.FONT_HERSHEY_SIMPLEX, 3, (140, 230, 240), 3, cv2.LINE_AA)
+    draw_button(img, btn_play, "START")
+
+
+def render_results(img, score, best_score):
+    cv2.putText(img, f'Your score: {score:.2f}', (700, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 2.0, (144, 128, 112), 2, cv2.LINE_AA)
+    cv2.putText(img, f'Previos best score: {best_score:.2f}', (600, 100),
+                cv2.FONT_HERSHEY_SIMPLEX, 2.0, (11, 134, 184), 2, cv2.LINE_AA)
+    draw_button(img, btn_play, "Again")
