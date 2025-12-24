@@ -85,12 +85,12 @@ with (mp_pose.Pose(min_detection_confidence=POSE_COEF, min_tracking_confidence=0
                 score = 0
                 counter = 0
 
-            if 10 - time.time() + start < 0:
+            if 60 - time.time() + start < 0:
                 state = 'RESULTS'
 
             cv2.putText(res_image, f"Score: {score:.2f}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, TEXT_COLOR, 2,
                         cv2.LINE_AA)
-            cv2.putText(res_image, f"Time left: {10 - time.time() + start:.2f}", (800, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 0), 2,
+            cv2.putText(res_image, f"Time left: {60 - time.time() + start:.2f}", (800, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 0), 2,
                         cv2.LINE_AA)
 
             if target_y1 is None:
@@ -170,7 +170,7 @@ with (mp_pose.Pose(min_detection_confidence=POSE_COEF, min_tracking_confidence=0
 
                 row_arrow_x = landmarks[19].x + ARROW_SHIFT
 
-                # отрисовка тетевы
+                # отрисовка тетивы
                 if is_bow_drawn and not arrow_state:
                     is_bow_drawn = False
                     arrow_x = min(max(row_arrow_x, lk_prev[0] - MIN_STRETCHING * np.cos(np.radians(angle_deg))),
